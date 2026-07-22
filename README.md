@@ -40,21 +40,18 @@ The backend produces:
 - Database migrations: Alembic
 - Local environment: Docker Compose
 
-## Project Structure
+## Quick Start — Local Development
 
-- `docs/` — Approved requirements and architecture
-- `backend/` — FastAPI backend
-- `frontend/` — React dashboard
-- `hardware-reference/` — Existing hardware code
-- `deployment/` — Server and deployment configuration
+Refer to [backend/README.md](file:///e:/Fleet_Manage/Fleet_Management/evolvex-mvp/backend/README.md) for detailed PowerShell setup steps.
 
-## Important MVP Scope
+```powershell
+# 1. Start local PostgreSQL 16 container
+docker compose -f deployment/docker-compose.local.yml up -d
 
-The current MVP is rule-based and AI-ready.
+# 2. Enter backend and sync dependencies
+Push-Location backend
+uv sync
 
-It does not claim:
-
-- Accident prediction
-- Medical fatigue detection
-- Exact fuel-consumption measurement
-- Machine-learning-based decisions
+# 3. Run FastAPI application
+uv run uvicorn evolvex.main:app --reload --port 8000
+```

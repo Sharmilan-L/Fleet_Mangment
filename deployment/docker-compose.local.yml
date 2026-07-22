@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: evolvex_postgres_dev
+    environment:
+      POSTGRES_USER: evolvex_user
+      POSTGRES_PASSWORD: evolvex_password
+      POSTGRES_DB: evolvex_db
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - evolvex_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolvex_user -d evolvex_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  evolvex_postgres_data:
+    name: evolvex_postgres_data
