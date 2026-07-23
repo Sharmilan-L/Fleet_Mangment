@@ -115,86 +115,142 @@ async def run_seed() -> dict:
 
         await session.flush()
 
-        # 3. Driver
-        emp_code = "DRV-DEMO-001"
-        dr_stmt = select(Driver).where(Driver.employee_code == emp_code)
-        driver = (await session.execute(dr_stmt)).scalar_one_or_none()
-        if not driver:
-            driver = Driver(
-                organization_id=org.id,
-                employee_code=emp_code,
-                first_name="John",
-                last_name="Doe",
-                license_number="LIC-PITCH-999",
-                status=DriverStatus.ACTIVE,
-                phone="+94771234567",
-                email="john.doe@evolvex.demo",
-            )
-            session.add(driver)
-            await session.flush()
-            logger.info("Created Demo Driver: %s %s", driver.first_name, driver.last_name)
+        # 3. Drivers
+        demo_drivers = [
+            {
+                "employee_code": "DRV-DEMO-001",
+                "first_name": "John",
+                "last_name": "Doe",
+                "license_number": "LIC-PITCH-999",
+                "email": "john.doe@evolvex.demo",
+                "phone": "+94771234567"
+            },
+            {
+                "employee_code": "DRV-DEMO-002",
+                "first_name": "Sarah",
+                "last_name": "Jenkins",
+                "license_number": "LIC-PITCH-888",
+                "email": "sarah.j@evolvex.demo",
+                "phone": "+94778888888"
+            },
+            {
+                "employee_code": "DRV-DEMO-003",
+                "first_name": "Michael",
+                "last_name": "Chen",
+                "license_number": "LIC-PITCH-777",
+                "email": "m.chen@evolvex.demo",
+                "phone": "+94777777777"
+            }
+        ]
+        
+        driver_ids = []
+        for d_info in demo_drivers:
+            dr_stmt = select(Driver).where(Driver.employee_code == d_info["employee_code"])
+            driver = (await session.execute(dr_stmt)).scalar_one_or_none()
+            if not driver:
+                driver = Driver(
+                    organization_id=org.id,
+                    employee_code=d_info["employee_code"],
+                    first_name=d_info["first_name"],
+                    last_name=d_info["last_name"],
+                    license_number=d_info["license_number"],
+                    status=DriverStatus.ACTIVE,
+                    phone=d_info["phone"],
+                    email=d_info["email"],
+                )
+                session.add(driver)
+                await session.flush()
+                logger.info("Created Demo Driver: %s %s", driver.first_name, driver.last_name)
+            driver_ids.append(driver.id)
 
-        # 4. Vehicle
-        veh_code = "VEH-DEMO-001"
-        vh_stmt = select(Vehicle).where(Vehicle.vehicle_code == veh_code)
-        vehicle = (await session.execute(vh_stmt)).scalar_one_or_none()
-        if not vehicle:
-            vehicle = Vehicle(
-                organization_id=org.id,
-                registration_number="EV-2026-SL",
-                vehicle_code=veh_code,
-                make="Toyota",
-                model="Hilux",
-                manufacture_year=2024,
-                default_speed_limit_kmh=60.0,
-                status=VehicleStatus.ACTIVE,
-            )
-            session.add(vehicle)
-            await session.flush()
-            logger.info("Created Demo Vehicle: %s", vehicle.registration_number)
+        # 4. Vehicles, Simulator Devices & Assignments
+        demo_assets = [
+            {
+                "vehicle_code": "VEH-DEMO-001",
+                "registration_number": "EV-2026-SL",
+                "make": "Toyota",
+                "model": "Hilux",
+                "device_code": "SIM-DEVICE-001",
+                "display_name": "Virtual Telemetry Simulator 1"
+            },
+            {
+                "vehicle_code": "VEH-DEMO-002",
+                "registration_number": "EV-2026-NY",
+                "make": "Ford",
+                "model": "F-150 Lightning",
+                "device_code": "SIM-DEVICE-002",
+                "display_name": "Virtual Telemetry Simulator 2"
+            },
+            {
+                "vehicle_code": "VEH-DEMO-003",
+                "registration_number": "EV-2026-TX",
+                "make": "Tesla",
+                "model": "Cybertruck",
+                "device_code": "SIM-DEVICE-003",
+                "display_name": "Virtual Telemetry Simulator 3"
+            }
+        ]
 
-        # 5. Simulator Device
-        dev_code = "SIM-DEVICE-001"
-        dev_stmt = select(Device).where(Device.device_code == dev_code)
-        device = (await session.execute(dev_stmt)).scalar_one_or_none()
-        if not device:
-            device = Device(
-                organization_id=org.id,
-                device_code=dev_code,
-                display_name="Virtual Telemetry Simulator",
-                device_type=DeviceType.SIMULATOR,
-                administrative_status=DeviceAdminStatus.TESTING,
-                api_key_hash=hash_api_key(sim_key),
-                firmware_version="sim-1.0.0",
-                telemetry_schema_version="1.0",
-            )
-            session.add(device)
-            await session.flush()
-            logger.info("Created Simulator Device: %s", device.device_code)
+        for asset in demo_assets:
+            # Vehicle
+            vh_stmt = select(Vehicle).where(Vehicle.vehicle_code == asset["vehicle_code"])
+            vehicle = (await session.execute(vh_stmt)).scalar_one_or_none()
+            if not vehicle:
+                vehicle = Vehicle(
+                    organization_id=org.id,
+                    registration_number=asset["registration_number"],
+                    vehicle_code=asset["vehicle_code"],
+                    make=asset["make"],
+                    model=asset["model"],
+                    manufacture_year=2024,
+                    default_speed_limit_kmh=60.0,
+                    status=VehicleStatus.ACTIVE,
+                )
+                session.add(vehicle)
+                await session.flush()
+                logger.info("Created Demo Vehicle: %s", vehicle.registration_number)
 
-        # 6. Device Assignment
-        asgn_stmt = select(DeviceAssignment).where(
-            DeviceAssignment.device_id == device.id,
-            DeviceAssignment.vehicle_id == vehicle.id,
-            DeviceAssignment.status == AssignmentStatus.ACTIVE,
-        )
-        assignment = (await session.execute(asgn_stmt)).scalar_one_or_none()
-        if not assignment:
-            assignment = DeviceAssignment(
-                organization_id=org.id,
-                device_id=device.id,
-                vehicle_id=vehicle.id,
-                status=AssignmentStatus.ACTIVE,
-                assigned_at=datetime.now(UTC),
-                notes="Pitch demonstration primary device assignment",
+            # Device
+            dev_stmt = select(Device).where(Device.device_code == asset["device_code"])
+            device = (await session.execute(dev_stmt)).scalar_one_or_none()
+            if not device:
+                device = Device(
+                    organization_id=org.id,
+                    device_code=asset["device_code"],
+                    display_name=asset["display_name"],
+                    device_type=DeviceType.SIMULATOR,
+                    administrative_status=DeviceAdminStatus.TESTING,
+                    api_key_hash=hash_api_key(sim_key),
+                    firmware_version="sim-1.0.0",
+                    telemetry_schema_version="1.0",
+                )
+                session.add(device)
+                await session.flush()
+                logger.info("Created Simulator Device: %s", device.device_code)
+
+            # Assignment
+            asgn_stmt = select(DeviceAssignment).where(
+                DeviceAssignment.device_id == device.id,
+                DeviceAssignment.vehicle_id == vehicle.id,
+                DeviceAssignment.status == AssignmentStatus.ACTIVE,
             )
-            session.add(assignment)
-            await session.flush()
-            logger.info(
-                "Created Active Assignment: %s -> %s",
-                device.device_code,
-                vehicle.registration_number,
-            )
+            assignment = (await session.execute(asgn_stmt)).scalar_one_or_none()
+            if not assignment:
+                assignment = DeviceAssignment(
+                    organization_id=org.id,
+                    device_id=device.id,
+                    vehicle_id=vehicle.id,
+                    status=AssignmentStatus.ACTIVE,
+                    assigned_at=datetime.now(UTC),
+                    notes=f"Pitch demo assignment for {device.device_code}",
+                )
+                session.add(assignment)
+                await session.flush()
+                logger.info(
+                    "Created Active Assignment: %s -> %s",
+                    device.device_code,
+                    vehicle.registration_number,
+                )
 
         # 7. Rule Set & Active Rule Version
         rs_stmt = select(RuleSet).where(
