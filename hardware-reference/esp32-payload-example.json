@@ -1,0 +1,11 @@
+{
+  "boot_id": "esp32-boot-99a8c1",
+  "sequence_number": 42,
+  "timestamp": 1721732160,
+  "lat": 6.9271,
+  "lng": 79.8612,
+  "speed_kmh": 58.4,
+  "accel_fwd": -0.7,
+  "accel_lat": 0.3,
+  "yaw_rate": 4.2
+}
