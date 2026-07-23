@@ -9,6 +9,7 @@ description = "EvolveX Driver Behaviour Intelligence Platform Backend"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.18.5",
     "asyncpg>=0.31.0",
     "fastapi>=0.139.2",
     "pydantic>=2.13.4",

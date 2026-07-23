@@ -24,7 +24,17 @@ Push-Location backend
 uv sync
 ```
 
-### 3. Run FastAPI Application
+### 3. Run Database Migration Commands (Alembic)
+
+```powershell
+# Check current migration revision
+uv run alembic current
+
+# Check revision heads
+uv run alembic heads
+```
+
+### 4. Run FastAPI Application
 
 ```powershell
 uv run uvicorn evolvex.main:app --reload --port 8000
@@ -33,19 +43,19 @@ uv run uvicorn evolvex.main:app --reload --port 8000
 - **Process Liveness:** `http://localhost:8000/health`
 - **Database Readiness:** `http://localhost:8000/api/v1/health/database`
 
-### 4. Run Unit Tests (Fast, No Docker Required)
+### 5. Run Unit Tests (Fast, No Docker Required)
 
 ```powershell
 uv run pytest tests/unit
 ```
 
-### 5. Run Real PostgreSQL Integration Test
+### 6. Run Real PostgreSQL Integration Test
 
 ```powershell
 uv run pytest -m integration
 ```
 
-### 6. Run Formatting and Linting Checks
+### 7. Run Formatting and Linting Checks
 
 ```powershell
 uv run ruff check .
