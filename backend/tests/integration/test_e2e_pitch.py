@@ -161,3 +161,10 @@ async def test_e2e_pitch_demo_flow(api_client: AsyncClient, setup_demo_data: dic
         assert data["type"] == "TELEMETRY_SNAPSHOT"
         assert data["tripId"] == trip_id
         assert data["data"]["speedKmh"] == 45.0
+
+    # 3. Clean up and end the active test trip
+    resp_end = await api_client.post(
+        f"/api/v1/trips/{trip_id}/end",
+        json={"endReason": "E2E integration test complete"},
+    )
+    assert resp_end.status_code == 200

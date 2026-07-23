@@ -122,7 +122,6 @@ export default function App() {
       } else if (msg.type === 'TRIP_STATUS_CHANGED') {
         if (msg.data.status === 'COMPLETED') {
           setActiveTrip(null);
-          alert('Trip completed successfully!');
         }
       }
     };

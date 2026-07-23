@@ -11,10 +11,11 @@ import hashlib
 import os
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from evolvex.core.database import close_engine, get_session_factory
 from evolvex.core.logging import logger
+from evolvex.db.models.trip import Trip, TripStatus
 from evolvex.db.models import (
     AccelerationRule,
     AssignmentStatus,
@@ -66,6 +67,14 @@ async def run_seed() -> dict:
     sim_key = os.getenv("SIMULATOR_DEVICE_KEY", "demo-simulator-secret-key-2026")
 
     async with session_factory() as session:
+        # 0. Clean up any leftover active trips from previous runs/tests
+        await session.execute(
+            update(Trip)
+            .where(Trip.status == TripStatus.ACTIVE)
+            .values(status=TripStatus.COMPLETED, end_time=datetime.now(UTC))
+        )
+        await session.flush()
+
         # 1. Organization
         org_code = "ORG-PITCH-001"
         org_stmt = select(Organization).where(Organization.organization_code == org_code)
