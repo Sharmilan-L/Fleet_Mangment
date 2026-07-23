@@ -6,8 +6,12 @@ before Alembic autogenerate inspects it.
 """
 
 from evolvex.db.models.organization import Organization, OrganizationStatus
+from evolvex.db.models.user import User, UserRole, UserStatus
 
 __all__ = [
     "Organization",
     "OrganizationStatus",
+    "User",
+    "UserRole",
+    "UserStatus",
 ]
