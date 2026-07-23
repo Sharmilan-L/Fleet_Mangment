@@ -136,6 +136,10 @@ class TestCreatedAtMixin:
         table = _TestMixinModel.__table__
         assert table.c.created_at.server_default is not None
 
+    def test_created_at_is_timezone_aware(self) -> None:
+        table = _TestMixinModel.__table__
+        assert table.c.created_at.type.timezone is True
+
     def test_created_at_no_onupdate(self) -> None:
         """created_at must NOT have onupdate — it is set once at insert."""
         table = _TestMixinModel.__table__
@@ -158,6 +162,10 @@ class TestUpdatedAtMixin:
         mapper = inspect(_TestMixinModel)
         col = mapper.columns["updated_at"]
         assert col.type.python_type is datetime
+
+    def test_updated_at_is_timezone_aware(self) -> None:
+        table = _TestMixinModel.__table__
+        assert table.c.updated_at.type.timezone is True
 
     def test_updated_at_not_nullable(self) -> None:
         table = _TestMixinModel.__table__

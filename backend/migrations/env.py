@@ -6,6 +6,9 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+# Import all models so their tables are registered on Base.metadata before
+# Alembic autogenerate inspects it.
+import evolvex.db.models  # noqa: F401
 from evolvex.core.config import settings
 from evolvex.db.base import Base
 

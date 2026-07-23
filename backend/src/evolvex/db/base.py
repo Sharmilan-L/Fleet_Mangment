@@ -15,7 +15,7 @@ Mixins
 import uuid
 from datetime import datetime
 
-from sqlalchemy import MetaData, func, text
+from sqlalchemy import DateTime, MetaData, func, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # ---------------------------------------------------------------------------
@@ -77,9 +77,11 @@ class CreatedAtMixin:
     Provides a ``created_at`` column with a server-side ``now()`` default.
 
     The value is set once when the row is inserted and never updated afterward.
+    Uses DateTime(timezone=True) to generate TIMESTAMPTZ columns in PostgreSQL.
     """
 
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
@@ -92,9 +94,11 @@ class UpdatedAtMixin:
 
     SQLAlchemy sets ``onupdate`` on the Python side; an additional database
     trigger may be added later for writes that bypass the ORM.
+    Uses DateTime(timezone=True) to generate TIMESTAMPTZ columns in PostgreSQL.
     """
 
     updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,

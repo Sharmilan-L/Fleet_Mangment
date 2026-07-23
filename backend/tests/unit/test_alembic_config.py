@@ -59,9 +59,9 @@ def test_alembic_framework_files_exist() -> None:
     assert versions_gitkeep.is_file(), "migrations/versions/.gitkeep file missing"
 
 
-def test_versions_directory_empty_of_revisions() -> None:
+def test_versions_directory_has_revisions() -> None:
     """
-    Verifies that migrations/versions directory contains no .py revision files.
+    Verifies that migrations/versions directory contains Alembic revision files.
     """
     backend_dir = Path(__file__).resolve().parents[2]
     versions_dir = backend_dir / "migrations" / "versions"
@@ -69,6 +69,4 @@ def test_versions_directory_empty_of_revisions() -> None:
     assert versions_dir.is_dir(), "migrations/versions directory missing"
 
     py_revisions = list(versions_dir.glob("*.py"))
-    assert len(py_revisions) == 0, (
-        f"Phase 2 Step 1 must not create any migration revision files, found: {py_revisions}"
-    )
+    assert len(py_revisions) > 0, "migrations/versions directory must contain revision files"
