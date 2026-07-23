@@ -9,6 +9,7 @@ from evolvex.db.models.assignment import AssignmentStatus, DeviceAssignment
 from evolvex.db.models.device import Device, DeviceAdminStatus, DeviceType
 from evolvex.db.models.driver import Driver, DriverStatus
 from evolvex.db.models.organization import Organization, OrganizationStatus
+from evolvex.db.models.telemetry import TelemetryProcessingStatus, TelemetryRecord, TelemetrySource
 from evolvex.db.models.trip import Trip, TripMode, TripStatus
 from evolvex.db.models.user import User, UserRole, UserStatus
 from evolvex.db.models.vehicle import Vehicle, VehicleStatus
@@ -23,6 +24,9 @@ __all__ = [
     "DriverStatus",
     "Organization",
     "OrganizationStatus",
+    "TelemetryProcessingStatus",
+    "TelemetryRecord",
+    "TelemetrySource",
     "Trip",
     "TripMode",
     "TripStatus",
