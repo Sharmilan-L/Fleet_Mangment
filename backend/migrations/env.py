@@ -7,6 +7,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from evolvex.core.config import settings
+from evolvex.db.base import Base
 
 # Alembic Config object, providing access to values within alembic.ini
 config = context.config
@@ -15,10 +16,9 @@ config = context.config
 if config.config_file_name:
     fileConfig(config.config_file_name)
 
-# target_metadata = None
-# Note: target_metadata will be connected to Base.metadata when approved
-# SQLAlchemy models are introduced in Phase 2 Step 2.
-target_metadata = None
+# Connected to project DeclarativeBase so Alembic autogenerate can detect
+# model changes when creating migrations.
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
