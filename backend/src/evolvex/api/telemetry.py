@@ -241,6 +241,12 @@ async def submit_telemetry(
 
         # 7. Create Telemetry Record
         now_utc = datetime.now(UTC)
+        if body.timestamp is not None:
+            ts_val = body.timestamp / 1000.0 if body.timestamp > 1e11 else body.timestamp
+            device_ts = datetime.fromtimestamp(ts_val, tz=UTC)
+        else:
+            device_ts = now_utc
+
         proc_status = (
             TelemetryProcessingStatus.PROCESSED
             if is_gps_valid
@@ -256,7 +262,7 @@ async def submit_telemetry(
             schema_version=x_telemetry_schema_version or "1.0",
             boot_id=body.boot_id,
             sequence_number=body.sequence_number,
-            device_timestamp=now_utc,  # converted if int ms
+            device_timestamp=device_ts,
             server_received_at=now_utc,
             latitude=body.lat if is_gps_valid else None,
             longitude=body.lng if is_gps_valid else None,
@@ -272,6 +278,15 @@ async def submit_telemetry(
 
         session.add(telemetry_rec)
         try:
+            await session.flush()
+            if active_trip:
+                from evolvex.engine.rule_engine import RuleEngine
+
+                rule_engine = RuleEngine(session)
+                await rule_engine.process_telemetry(
+                    telemetry=telemetry_rec,
+                    speed_limit_kmh=active_trip.applied_speed_limit_kmh,
+                )
             await session.commit()
             await session.refresh(telemetry_rec)
         except IntegrityError:
