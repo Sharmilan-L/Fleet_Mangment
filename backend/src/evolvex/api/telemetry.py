@@ -289,6 +289,28 @@ async def submit_telemetry(
                 )
             await session.commit()
             await session.refresh(telemetry_rec)
+
+            # WebSocket Broadcast (Post-Commit)
+            if active_trip:
+                from evolvex.core.websocket import manager as ws_manager
+
+                trip_id_str = str(active_trip.id)
+                # 1. Telemetry Snapshot
+                await ws_manager.broadcast_to_trip(
+                    trip_id_str,
+                    "TELEMETRY_SNAPSHOT",
+                    {
+                        "speedKmh": telemetry_rec.speed_kmh,
+                        "forwardAccelerationMs2": telemetry_rec.forward_acceleration_ms2,
+                        "lateralAccelerationMs2": telemetry_rec.lateral_acceleration_ms2,
+                        "yawRateDegS": telemetry_rec.yaw_rate_deg_s,
+                        "latitude": telemetry_rec.latitude,
+                        "longitude": telemetry_rec.longitude,
+                        "gpsValid": telemetry_rec.gps_valid,
+                        "sequenceNumber": telemetry_rec.sequence_number,
+                        "serverReceivedAt": telemetry_rec.server_received_at.isoformat(),
+                    },
+                )
         except IntegrityError:
             await session.rollback()
             # Race condition duplicate check

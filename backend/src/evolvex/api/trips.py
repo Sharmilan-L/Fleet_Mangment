@@ -572,6 +572,18 @@ async def end_trip(trip_id: uuid.UUID, payload: EndTripRequest) -> JSONResponse:
         await session.commit()
         await session.refresh(trip)
 
+        from evolvex.core.websocket import manager as ws_manager
+
+        await ws_manager.broadcast_to_trip(
+            str(trip.id),
+            "TRIP_STATUS_CHANGED",
+            {
+                "status": trip.status,
+                "endTime": trip.end_time.isoformat(),
+                "endReason": trip.end_reason,
+            },
+        )
+
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content={
