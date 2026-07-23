@@ -10,7 +10,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Index, String, Uuid, func, text
+from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Index, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from evolvex.db.base import Base, CreatedAtMixin, UpdatedAtMixin, UUIDPrimaryKeyMixin
@@ -96,7 +96,7 @@ class Trip(UUIDPrimaryKeyMixin, CreatedAtMixin, UpdatedAtMixin, Base):
     )
 
     rule_set_version_id: Mapped[uuid.UUID | None] = mapped_column(
-        Uuid,
+        ForeignKey("rule_set_versions.id", ondelete="SET NULL"),
         nullable=True,
         comment="Applied rule set version UUID",
     )

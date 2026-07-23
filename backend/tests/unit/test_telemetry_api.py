@@ -362,9 +362,7 @@ async def test_extreme_sensor_values_validation(
 
 
 @pytest.mark.asyncio
-async def test_valid_simulator_packet(
-    api_client: AsyncClient, setup_telemetry_db: dict
-) -> None:
+async def test_valid_simulator_packet(api_client: AsyncClient, setup_telemetry_db: dict) -> None:
     """Test telemetry submission for a simulator device."""
     session_factory = get_session_factory()
     async with session_factory() as db_session:
@@ -403,9 +401,7 @@ async def test_valid_simulator_packet(
 
 
 @pytest.mark.asyncio
-async def test_invalid_coordinates(
-    api_client: AsyncClient, setup_telemetry_db: dict
-) -> None:
+async def test_invalid_coordinates(api_client: AsyncClient, setup_telemetry_db: dict) -> None:
     """Test telemetry submission with out of bounds latitude (> 90.0)."""
     device = setup_telemetry_db["device"]
     raw_key = setup_telemetry_db["raw_key"]
@@ -454,4 +450,3 @@ async def test_unsupported_schema_version(
     assert response.status_code == 400
     res_json = response.json()
     assert res_json["error"]["code"] == "UNSUPPORTED_SCHEMA_VERSION"
-
