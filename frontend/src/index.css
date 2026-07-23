@@ -125,10 +125,10 @@ body {
 /* Dashboard Layout */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 320px 1fr 360px;
-  gap: 24px;
+  grid-template-columns: 360px 1fr 400px;
+  gap: 28px;
   padding: 28px 32px;
-  max-width: 1600px;
+  max-width: 1800px;
   margin: 0 auto;
 }
 
@@ -225,10 +225,9 @@ body {
 }
 
 .metric-value {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 700;
   font-family: var(--font-mono);
-
 }
 
 .metric-unit {
@@ -252,7 +251,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 440px;
+  flex: 1;
   overflow-y: auto;
   padding-right: 6px;
 }
@@ -331,4 +330,44 @@ body {
 
 .select-input:focus {
   border-color: var(--accent-blue);
+}
+
+.map-panel-card {
+  min-height: 480px;
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  
+  .brand-container {
+    justify-content: center;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    padding: 16px 12px;
+    gap: 16px;
+  }
+
+  .map-panel-card {
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 580px) {
+  .brand-container span {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .telemetry-grid {
+    grid-template-columns: 1fr;
+  }
 }

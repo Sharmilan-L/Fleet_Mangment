@@ -23,6 +23,8 @@ from evolvex.db.models import (
     Driver,
     DriverStatus,
     DrivingEvent,
+    EventTelemetryLink,
+    EvidenceRole,
     RuleSetVersion,
     RuleSetVersionStatus,
     TelemetryRecord,
@@ -452,6 +454,9 @@ async def get_live_trip_snapshot(trip_id: uuid.UUID) -> JSONResponse:
         # Get events
         ev_stmt = (
             select(DrivingEvent)
+            .options(
+                selectinload(DrivingEvent.telemetry_links).selectinload(EventTelemetryLink.telemetry)
+            )
             .where(DrivingEvent.trip_id == trip_id)
             .order_by(desc(DrivingEvent.started_at))
         )
@@ -473,8 +478,18 @@ async def get_live_trip_snapshot(trip_id: uuid.UUID) -> JSONResponse:
             "serverReceivedAt": latest_tel.server_received_at.isoformat() if latest_tel else None,
         }
 
-        event_items = [
-            {
+        event_items = []
+        for e in events:
+            lat, lng = None, None
+            trigger_link = next((l for l in e.telemetry_links if l.evidence_role == EvidenceRole.TRIGGER), None)
+            if trigger_link and trigger_link.telemetry:
+                lat = trigger_link.telemetry.latitude
+                lng = trigger_link.telemetry.longitude
+            elif e.telemetry_links and e.telemetry_links[0].telemetry:
+                lat = e.telemetry_links[0].telemetry.latitude
+                lng = e.telemetry_links[0].telemetry.longitude
+
+            event_items.append({
                 "id": str(e.id),
                 "eventType": e.event_type,
                 "severity": e.severity,
@@ -482,9 +497,9 @@ async def get_live_trip_snapshot(trip_id: uuid.UUID) -> JSONResponse:
                 "startedAt": e.started_at.isoformat(),
                 "endedAt": e.ended_at.isoformat() if e.ended_at else None,
                 "primaryMeasurement": e.primary_measurement,
-            }
-            for e in events
-        ]
+                "latitude": lat,
+                "longitude": lng,
+            })
 
         driver_data = (
             {"id": str(trip.driver_id), "name": f"{trip.driver.first_name} {trip.driver.last_name}"}

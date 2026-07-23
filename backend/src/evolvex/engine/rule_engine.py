@@ -405,6 +405,7 @@ class RuleEngine:
                         evidence_role=EvidenceRole.DURING,
                     )
                     self.session.add(link)
+                    current_event = active_event
             else:
                 # Event ended -> move to COMPLETED & COOLDOWN
                 if active_event:
@@ -420,6 +421,7 @@ class RuleEngine:
                         evidence_role=EvidenceRole.RELEASE,
                     )
                     self.session.add(link)
+                    current_event = active_event
 
                 det_state.state = DetectorStateEnum.COOLDOWN
                 det_state.active_event_id = None

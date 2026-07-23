@@ -80,6 +80,38 @@ class SimulationRunner:
         if scenario_code not in ScenarioGenerator.SCENARIOS:
             raise ValueError(f"Unknown scenario code: {scenario_code}")
 
+        # Resolve device assignment from Trip ID
+        from evolvex.core.database import get_session_factory
+        from evolvex.db.models import Trip, DeviceAssignment, Device
+        from sqlalchemy.orm import selectinload
+        from sqlalchemy import select
+
+        session_factory = get_session_factory()
+        async with session_factory() as session:
+            stmt = (
+                select(Trip)
+                .options(
+                    selectinload(Trip.device_assignment).selectinload(DeviceAssignment.device)
+                )
+                .where(Trip.id == uuid.UUID(trip_id))
+            )
+            res = await session.execute(stmt)
+            trip = res.scalar_one_or_none()
+            if trip and trip.device_assignment and trip.device_assignment.device:
+                self.device_code = trip.device_assignment.device.device_code
+                self.device_key = "demo-simulator-secret-key-2026"
+                logger.info(
+                    "Resolved simulation device code: %s for trip: %s",
+                    self.device_code,
+                    trip_id,
+                )
+            else:
+                logger.warning(
+                    "Could not resolve device code for trip_id: %s. Using default: %s",
+                    trip_id,
+                    self.device_code,
+                )
+
         self.trip_id = trip_id
         self.scenario_code = scenario_code
         self.packet_interval_ms = max(250, min(5000, packet_interval_ms))

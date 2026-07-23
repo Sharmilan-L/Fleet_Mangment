@@ -279,11 +279,12 @@ async def submit_telemetry(
         session.add(telemetry_rec)
         try:
             await session.flush()
+            detected_events = []
             if active_trip:
                 from evolvex.engine.rule_engine import RuleEngine
 
                 rule_engine = RuleEngine(session)
-                await rule_engine.process_telemetry(
+                detected_events = await rule_engine.process_telemetry(
                     telemetry=telemetry_rec,
                     speed_limit_kmh=active_trip.applied_speed_limit_kmh,
                 )
@@ -311,6 +312,41 @@ async def submit_telemetry(
                         "serverReceivedAt": telemetry_rec.server_received_at.isoformat(),
                     },
                 )
+
+                # 2. Broadcast detected events
+                for event in detected_events:
+                    await ws_manager.broadcast_to_trip(
+                        trip_id_str,
+                        "EVENT_DETECTED",
+                        {
+                            "id": str(event.id),
+                            "eventType": event.event_type.value,
+                            "severity": event.severity.value,
+                            "status": event.status.value,
+                            "startedAt": event.started_at.isoformat() if event.started_at else now_utc.isoformat(),
+                            "endedAt": event.ended_at.isoformat() if event.ended_at else None,
+                            "durationMs": event.duration_ms,
+                            "primaryMeasurement": event.primary_measurement,
+                            "latitude": telemetry_rec.latitude,
+                            "longitude": telemetry_rec.longitude,
+                        }
+                    )
+
+                # 3. Broadcast updated safety score
+                if detected_events:
+                    from evolvex.db.models import TripScoreState
+                    score_stmt = select(TripScoreState).where(TripScoreState.trip_id == active_trip.id)
+                    score_res = await session.execute(score_stmt)
+                    score_state = score_res.scalar_one_or_none()
+                    if score_state:
+                        await ws_manager.broadcast_to_trip(
+                            trip_id_str,
+                            "SCORE_UPDATED",
+                            {
+                                "newScore": score_state.current_score,
+                                "currentRiskLevel": str(score_state.current_risk_level),
+                            }
+                        )
         except IntegrityError:
             await session.rollback()
             # Race condition duplicate check

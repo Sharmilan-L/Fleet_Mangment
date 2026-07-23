@@ -3,6 +3,7 @@ import ScoreGauge from './components/ScoreGauge';
 import TelemetryGauges from './components/TelemetryGauges';
 import EventTimeline from './components/EventTimeline';
 import SimulatorControl from './components/SimulatorControl';
+import LiveMap from './components/LiveMap';
 
 export default function App() {
   const [options, setOptions] = useState(null);
@@ -18,7 +19,7 @@ export default function App() {
 
   const wsRef = useRef(null);
 
-  // 1. Fetch start options on load
+  // 1. Fetch start options on load & restore active session if exists
   useEffect(() => {
     fetch('/api/v1/trips/start-options')
       .then((res) => res.json())
@@ -30,6 +31,37 @@ export default function App() {
         }
       })
       .catch((err) => console.error('Failed to load start options', err));
+
+    // Restore active session
+    fetch('/api/v1/trips/active')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data.length > 0) {
+          const active = data.data[0];
+          fetch(`/api/v1/trips/${active.id}/live`)
+            .then((res) => res.json())
+            .then((liveData) => {
+              if (liveData.success) {
+                const tripData = liveData.data;
+                setActiveTrip({
+                  id: tripData.trip.id,
+                  tripCode: tripData.trip.tripCode,
+                  currentScore: tripData.score?.currentScore ?? 100.0,
+                  riskLevel: tripData.score?.riskLevel ?? 'LOW',
+                  driver: tripData.driver,
+                  vehicle: tripData.vehicle,
+                  device: tripData.device,
+                });
+                setScore(tripData.score?.currentScore ?? 100.0);
+                setRiskLevel(tripData.score?.riskLevel ?? 'LOW');
+                setEvents(tripData.events || []);
+                setTelemetry(tripData.latestTelemetry || {});
+              }
+            })
+            .catch((err) => console.error('Failed to fetch live trip snapshot', err));
+        }
+      })
+      .catch((err) => console.error('Failed to check active trips', err));
   }, []);
 
   // 2. Poll simulator status when active
@@ -74,7 +106,16 @@ export default function App() {
       if (msg.type === 'TELEMETRY_SNAPSHOT') {
         setTelemetry(msg.data);
       } else if (msg.type === 'EVENT_DETECTED') {
-        setEvents((prev) => [msg.data, ...prev]);
+        setEvents((prev) => {
+          const index = prev.findIndex((e) => e.id === msg.data.id);
+          if (index !== -1) {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], ...msg.data };
+            return updated;
+          } else {
+            return [msg.data, ...prev];
+          }
+        });
       } else if (msg.type === 'SCORE_UPDATED') {
         setScore(msg.data.newScore);
         setRiskLevel(msg.data.currentRiskLevel);
@@ -196,13 +237,38 @@ export default function App() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Active Trip Code</div>
-                  <div style={{ fontWeight: '700', fontSize: '14px', marginTop: '2px' }}>{activeTrip.tripCode}</div>
+                <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Active Trip Code</div>
+                    <div style={{ fontWeight: '700', fontSize: '14px', marginTop: '2px', color: 'var(--accent-cyan)' }}>{activeTrip.tripCode}</div>
+                  </div>
                   
-                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '8px' }}>WebSocket Status</div>
-                  <div style={{ fontWeight: '700', fontSize: '13px', color: wsConnected ? 'var(--accent-green)' : 'var(--accent-red)', marginTop: '2px' }}>
-                    {wsConnected ? 'Connected' : 'Disconnected'}
+                  {activeTrip.driver?.name && (
+                    <div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Driver</div>
+                      <div style={{ fontWeight: '600', fontSize: '13px', marginTop: '2px', color: 'var(--text-primary)' }}>{activeTrip.driver.name}</div>
+                    </div>
+                  )}
+
+                  {activeTrip.vehicle?.registrationNumber && (
+                    <div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Vehicle</div>
+                      <div style={{ fontWeight: '600', fontSize: '13px', marginTop: '2px', color: 'var(--text-primary)' }}>{activeTrip.vehicle.registrationNumber}</div>
+                    </div>
+                  )}
+
+                  {activeTrip.device?.deviceCode && (
+                    <div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Device Code</div>
+                      <div style={{ fontWeight: '600', fontSize: '13px', marginTop: '2px', color: 'var(--text-primary)' }}>{activeTrip.device.deviceCode}</div>
+                    </div>
+                  )}
+
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>WebSocket Status</div>
+                    <div style={{ fontWeight: '700', fontSize: '13px', color: wsConnected ? 'var(--accent-green)' : 'var(--accent-red)', marginTop: '2px' }}>
+                      {wsConnected ? 'Connected' : 'Disconnected'}
+                    </div>
                   </div>
                 </div>
 
@@ -223,18 +289,15 @@ export default function App() {
         {/* Center Column: Live Analytics */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <TelemetryGauges telemetry={telemetry} />
-          <div className="glass-panel" style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', minHeight: '300px' }}>
+          <div className="glass-panel map-panel-card" style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column' }}>
             <div className="panel-title">Real-Time Vehicle Map Tracks</div>
-            <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-color)', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
               {telemetry.latitude ? (
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Current Coordinates</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', color: 'var(--accent-cyan)', marginTop: '6px' }}>
-                    {telemetry.latitude.toFixed(5)}, {telemetry.longitude.toFixed(5)}
-                  </div>
-                </div>
+                <LiveMap latitude={telemetry.latitude} longitude={telemetry.longitude} events={events} />
               ) : (
-                <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Awaiting GPS signal from simulation runner...</span>
+                <div style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Awaiting GPS signal from simulation runner...</span>
+                </div>
               )}
             </div>
           </div>

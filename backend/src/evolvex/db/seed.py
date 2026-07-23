@@ -384,7 +384,7 @@ async def run_seed() -> dict:
             "manager_email": manager_email,
             "driver_id": str(driver.id),
             "vehicle_id": str(vehicle.id),
-            "device_code": device.device_code,
+            "device_code": "SIM-DEVICE-001",
             "assignment_id": str(assignment.id),
             "rule_version_id": str(rule_version.id),
         }
