@@ -5,8 +5,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from evolvex.api.fleet import router as fleet_router
 from evolvex.api.health import router as health_router
 from evolvex.api.telemetry import router as telemetry_router
+from evolvex.api.trips import router as trips_router
 from evolvex.core.config import settings
 from evolvex.core.database import close_engine
 from evolvex.core.exceptions import (
@@ -61,6 +63,8 @@ def create_app() -> FastAPI:
     # Router Inclusion
     app.include_router(health_router)
     app.include_router(telemetry_router)
+    app.include_router(fleet_router)
+    app.include_router(trips_router)
 
     return app
 
