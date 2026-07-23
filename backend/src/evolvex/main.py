@@ -7,6 +7,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from evolvex.api.fleet import router as fleet_router
 from evolvex.api.health import router as health_router
+from evolvex.api.simulator import router as simulator_router
 from evolvex.api.telemetry import router as telemetry_router
 from evolvex.api.trips import router as trips_router
 from evolvex.core.config import settings
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(telemetry_router)
     app.include_router(fleet_router)
     app.include_router(trips_router)
+    app.include_router(simulator_router)
 
     return app
 
